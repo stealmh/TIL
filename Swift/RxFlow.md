@@ -176,5 +176,55 @@ final class HomeFlow: Flow {
 }
 ```
 
+### 수정...(05.22)
+- 해당 코드대로 작성 시 launchScreen이 그대로 남아있어 메모리 누수 발생 <br>
+```swift
+window?.rootViewController = LaunchViewController()
+DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+    self.coordinateToAppFlow(with: windowScene)
+}
+```
+<br>
+
+>다음과 같이 감싸주거나, Flow를 하나 만들어서 AppFlow -> launchScreenFlow -> dismiss -> HomeFlow 타게 수정
+```swift
+//AppFlow
+func navigate(to step: Step) -> FlowContributors {
+    guard let step = step as? ExampleStep else { return .none }
+        
+    switch step {
+        case .screenIsRequired:
+            return coordinateToScreenVC()
+        case .homeIsRequired, .screenIsCompleted:
+            return navigateToHomeScreen()
+        default: return .none
+    }
+}
+    
+private func coordinateToLoginVC() -> FlowContributors {
+    let screenFlow = ScreenFlow()
+    Flows.use(loginFlow, when: .created) { [unowned self] root in
+        self.window.rootViewController = root
+    }
+        
+    let nextStep = OneStepper(withSingleStep: ExampleStep.screenIsRequired)
+    return .one(flowContributor: .contribute(withNextPresentable: screenFlow, withNextStepper: nextStep))
+}
+
+// ScreenFlow
+func navigate(to step: Step) -> FlowContributors {
+    guard let step = step as? ExampleStep else { return .none }
+        
+    switch step {
+        case .screenIsRequired:
+            return coordinateToScreen()
+        case .screenIsCompleted:
+            return .end(forwardToParentFlowWithStep: ExampleStep.homeIsRequired)
+        default:
+            return .none
+    }
+}
+```
+
 ## 결과
 <img width="400" height="800" alt="image" src="https://user-images.githubusercontent.com/66459715/236729805-08404a25-d514-4903-8cbb-176f4d10541d.gif">
