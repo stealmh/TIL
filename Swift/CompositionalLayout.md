@@ -112,7 +112,55 @@ return section
     	case groupPagingCentered = 5
     }
     ```
+### 응용 (태그 목록 보여주기)
+```swift
+// 아이디어: UIView를 얹고 label을 얹는다.
+// UIView의 cornerRadius를 주어 캡슐형태의 모양으로 잡는다.
+
+var tagList: [String] = ["파이썬","자바","스위프트"]
+func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    if section == 0 {
+        return tagList.count
+    } else {
+        return sections[section]
+    }
+}
+
+// 태그를 위한 컬렉션뷰 셀을 만들어서 분기처리
+// 이후 item, group, section은 동일하게 작성
+func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    let divider = indexPath.section
+    switch divider {
+    case 0:
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Tag.identifier, for: indexPath) as! Tag
+        cell.configure(with: tagList[indexPath.row])
+        cell.sizeToFit()
+        return cell
+    case 1:
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Item.identifier, for: indexPath)
+        return cell
+    case 2:
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Item.identifier, for: indexPath)
+        return cell
+    default:
+        return UICollectionViewCell()
+    }
+}
+
+// +사용자로부터 액션을 받았을 때 태그를 추가하는 기능
+// collectionView는 Rx로 만들지 않았기 때문에 추후 리팩토링 가능!
+
+myAddButton.rx.tap
+    .subscribe(onNext: {_ in
+        let data: [String] = ["멍멍이","냥냥이","뽀삐"]
+        self.tagList.append(data.randomElement()!)
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+        }
+    }).disposed(by: disposeBag)
     
+```
 
 ### 결과
 <img src="https://github.com/APPSCHOOL1-REPO/finalproject-msg/assets/66459715/46f2ac4e-54a6-4af3-8c69-87793a585271"></img>
+<img src="https://github.com/APPSCHOOL1-REPO/finalproject-msg/assets/66459715/3b8b18a1-24be-465b-8929-48038f48a700"></img>
